@@ -557,5 +557,55 @@
   <button class="tab-btn active" id="tabBtnVerify" onclick="switchTab('verify')">Verify an Agency</button>
   <button class="tab-btn" id="tabBtnReport" onclick="switchTab('report')">Report a Suspicious Agency</button>
 </nav>
+
+<main>
+
+  <section id="tabVerify" class="panel">
+
+    <div id="listView">
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="Search agency name, e.g. &quot;Everest&quot; or &quot;Himal&quot;..." oninput="renderList()">
+      </div>
+      <p class="hint-row">Tip: try searching "Sunrise" &mdash; notice how one entry is verified and a similarly-named one is flagged. Scammers copy real names on purpose.</p>
+      <div class="agency-list" id="agencyList"></div>
+    </div>
+
+    <div id="detailView" class="hidden"></div>
+
+  </section>
+
+  <section id="tabReport" class="panel hidden">
+
+    <div class="report-form-wrap">
+      <h3>Seen something suspicious?</h3>
+      <p class="desc">Submit what happened. This goes into a public, unverified feed for other jobseekers to see &mdash; it is not an official finding, and does not change any agency's verified/flagged status above.</p>
+
+      <form class="inline-form" id="reportForm" onsubmit="submitReport(event)">
+        <div class="field">
+          <label for="repName">Agency name</label>
+          <input type="text" id="repName" placeholder="Name as advertised to you" required>
+        </div>
+        <div class="field">
+          <label for="repDesc">What happened?</label>
+          <textarea id="repDesc" rows="4" placeholder="Describe the interaction, any fees requested, promises made, contact details used, etc." required></textarea>
+        </div>
+        <div class="field">
+          <label for="repFile">Evidence (optional)</label>
+          <div class="file-row">
+            <input type="file" id="repFile" onchange="handleFileSelect()">
+            <span class="file-chip" id="fileChip">1 file attached</span>
+          </div>
+        </div>
+        <button type="submit" class="primary-btn">Submit report</button>
+      </form>
+    </div>
+
+    <div class="section-label">Community reports &mdash; unverified</div>
+    <div class="reports-feed" id="reportsFeed"></div>
+
+  </section>
+
+</main>
+
 </body>
 </html>
