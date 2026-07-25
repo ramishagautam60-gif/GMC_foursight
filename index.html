@@ -3,14 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Praman | Foreign Employment Agency Verification</title>
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
 <style>
   :root{
     --bg-deep: #06060e;
@@ -538,8 +534,6 @@
     to{ opacity:0; pointer-events:none; }
   }
 </style>
-
-
 </head>
 <body>
 
@@ -585,9 +579,11 @@
 
       <form class="inline-form" id="reportForm" onsubmit="submitReport(event)">
         <div class="field">
-          <label for="repName">Agency name</label>
-          <input type="text" id="repName" placeholder="Name as advertised to you" required>
-        </div>
+          <label for="repAgency">Agency Name</label>
+          <select id="repAgency" required>
+              <option value="">Select an agency</option>
+          </select>
+</div>
         <div class="field">
           <label for="repDesc">What happened?</label>
           <textarea id="repDesc" rows="4" placeholder="Describe the interaction, any fees requested, promises made, contact details used, etc." required></textarea>
@@ -678,7 +674,53 @@
       agenciesCache = [];
     } else {
       agenciesCache = data || [];
+      populateAgencyDropdown();
     }
+  }
+
+  async function updateAgencyStatus(agencyId) {
+
+    const { count, error } = await db
+        .from("reports")
+        .select("*", { count: "exact", head: true })
+        .eq("agency_id", agencyId);
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    const newStatus = count >= 5 ? "under_review" : "verified";
+
+    const { error: updateError } = await db
+        .from("agencies")
+        .update({ status: newStatus })
+        .eq("id", agencyId);
+
+    if (updateError) {
+        console.error(updateError);
+    }
+
+    await loadAgencies();
+
+    if (activeAgencyId === agencyId) {
+        openDetail(agencyId);
+    }
+  }
+
+  function populateAgencyDropdown() {
+    const select = document.getElementById("repAgency");
+
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Select an agency</option>';
+
+    agenciesCache.forEach(a => {
+        const option = document.createElement("option");
+        option.value = a.id;
+        option.textContent = a.name;
+        select.appendChild(option);
+    });
   }
 
   async function renderList(){
@@ -744,7 +786,7 @@
     const statusConfig = {
       verified:    { stampClass:'stamp-verified', word1:'VERIFIED',   word2:'DOFE RECORD',      color:'var(--verified)', label:'Verified license on record' },
       flagged:     { stampClass:'stamp-flagged',  word1:'FLAGGED',    word2:'COMMUNITY ALERT',   color:'var(--flagged)',  label:'Flagged by community reports' },
-      under_review:{ stampClass:'stamp-flagged',  word1:'UNDER REVIEW', word2:'10+ REPORTS filed', color:'var(--amber)',   label:'Under review — 10+ community reports' }
+      under_review:{ stampClass:'stamp-flagged',  word1:'UNDER REVIEW', word2:'5+ REPORTS filed', color:'var(--amber)',   label:'Under review — 5+ community reports' }
     };
     const cfg = statusConfig[a.status] || statusConfig.flagged;
 
@@ -855,7 +897,17 @@
 
   async function submitReport(event){
     event.preventDefault();
-    const name = document.getElementById('repName').value.trim();
+//    const name = document.getElementById('repName').value.trim();
+    const agencyId = document.getElementById("repAgency").value;
+
+    const agency = agenciesCache.find(a => a.id == agencyId);
+
+    if (!agency) {
+      showToast("Please select an agency.", "error");
+      return;
+    }
+
+    const name = agency.name;
     const desc = document.getElementById('repDesc').value.trim();
     if(!name || !desc) return;
 
@@ -891,11 +943,12 @@
     const { error } = await db
       .from('reports')
       .insert({
-        name: name,
-        description: desc,
-        has_file: evidenceUrl !== '',
-        evidence_url: evidenceUrl,
-        date: dateStr
+          agency_id: agencyId,
+          name: name,
+          description: desc,
+          has_file: evidenceUrl !== '',
+          evidence_url: evidenceUrl,
+          date: dateStr
       });
 
     submitBtn.textContent = 'Submit report';
@@ -914,19 +967,11 @@
     const { count } = await db
       .from('reports')
       .select('*', { count: 'exact', head: true })
-      .ilike('name', name);
+      .eq('agency_id', agencyId);
 
-    if(count >= 10){
-      await db
-        .from('agencies')
-        .update({ status: 'under_review' })
-        .ilike('name', name)
-        .eq('status', 'verified');
-      await loadAgencies();
-      showToast('Report submitted. This agency is now under review (10+ reports).');
-    } else {
-      showToast('Report submitted successfully.');
-    }
+    await updateAgencyStatus(agencyId);
+
+    showToast("Report submitted successfully.");
 
     renderReports();
   }
@@ -959,11 +1004,43 @@
         </div>
         <p class="desc-text">${escapeHtml(r.description)}</p>
         <div class="foot">
+            <button onclick="deleteReport('${r.id}','${r.agency_id}')">
+                Delete
+            </button>
           <span>Submitted ${escapeHtml(r.date)}</span>
           ${r.evidence_url ? '<a class="evidence-link" href="' + escapeHtml(r.evidence_url) + '" target="_blank" rel="noopener">📎 View evidence</a>' : (r.has_file ? '<span class="evidence-tag">📎 Evidence attached</span>' : '<span></span>')}
         </div>
       </div>
     `).join('');
+  }
+
+ async function deleteReport(reportId, agencyId) {
+
+    console.log("Deleting report:", reportId);
+
+    const { data, error } = await db
+    .from("reports")
+    .delete()
+    .eq("id", reportId)
+    .select();
+
+  console.log("Deleted rows:", data);
+
+  if (error) {
+      console.error(error);
+  }
+
+    if (error) {
+        console.error(error);
+        showToast("Failed to delete report: " + error.message, "error");
+        return;
+    }
+
+    await updateAgencyStatus(agencyId);
+
+    await renderReports();
+
+    showToast("Report deleted.");
   }
 
   // ---------------------------------------------------------------
