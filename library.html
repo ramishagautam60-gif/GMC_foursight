@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Praman | Foreign Employment Agency Verification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Public+Sans:wght@400;500;600;700;800&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy: #0b1420;
+    --navy-deep: #060c14;
+    --paper: #211f1b;
+    --paper-dim: #3e2d1f;
+    --ink: #22201a;
+    --ink-soft: #55503f;
+    --verified: #2f6b46;
+    --flagged: #a8531c;
+    --unverified: #7c8291;
+    --seal-red: #8f2c22;
+    --gold: #c8a24d;
+    --line: rgba(200, 162, 77, 0.28);
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(200,162,77,0.08), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(47,107,70,0.07), transparent 55%),
+      var(--navy);
+    color: var(--paper);
+    font-family: 'Public Sans', sans-serif;
+    min-height: 100vh;
+    background-attachment: fixed;
+  }
+
+  /* faint paper-grain / security-print texture overlay */
+  body::before{
+    content:"";
+    position: fixed; inset:0;
+    pointer-events:none;
+    opacity: 0.05;
+    background-image:
+      repeating-linear-gradient(45deg, #fff 0 1px, transparent 1px 14px),
+      repeating-linear-gradient(-45deg, #fff 0 1px, transparent 1px 14px);
+    z-index: 0;
+  }
+
+  .mono{ font-family: 'Courier Prime', monospace; }
+  .stamp-font{ font-family: 'Special Elite', monospace; }
+
+  header.masthead{
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 40px 24px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .masthead-row{
+    display:flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap: 14px;
+  }
+
+  .brand-mark{
+    width: 46px; height: 46px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Special Elite', monospace;
+    color: var(--gold);
+    font-size: 18px;
+    flex-shrink:0;
+  }
+
+  h1{
+    font-family: 'Special Elite', monospace;
+    font-size: 28px;
+    letter-spacing: 0.5px;
+    margin: 0 0 2px;
+    color: var(--paper);
+  }
+
+  .tagline{
+    margin:0;
+    font-size: 13px;
+    color: var(--gold);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .subline{
+    margin-top: 14px;
+    color: rgba(243,234,211,0.65);
+    font-size: 14.5px;
+    max-width: 640px;
+    line-height: 1.55;
+  }
+
+  nav.tabs{
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display:flex;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .tab-btn{
+    font-family: 'Courier Prime', monospace;
+    font-weight: 700;
+    font-size: 13.5px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    background: transparent;
+    color: rgba(243,234,211,0.55);
+    border: 1px solid transparent;
+    border-bottom: none;
+    padding: 12px 20px;
+    cursor: pointer;
+    border-radius: 6px 6px 0 0;
+    transition: all 0.15s ease;
+    position: relative;
+    top: 1px;
+  }
+
+  .tab-btn:hover{ color: var(--paper); }
+
+  .tab-btn.active{
+    color: var(--navy);
+    background: var(--paper);
+    border-color: var(--line);
+  }
+
+  main{
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 24px 80px;
+  }
+
+  .panel{
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 4px 12px 12px 12px;
+    border: 1px solid var(--line);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    padding: 28px;
+  }
+
+  .hidden{ display:none !important; }
+
+  /* --- search --- */
+  .search-row{
+    display:flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  input[type="text"], textarea, select{
+    font-family: 'Public Sans', sans-serif;
+    font-size: 14.5px;
+    padding: 12px 14px;
+    border: 1.5px solid #cbbf9b;
+    border-radius: 6px;
+    background: #fffdf7;
+    color: var(--ink);
+    width: 100%;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus{
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+    border-color: var(--gold);
+  }
+
+  .search-row input{ flex:1; }
+
+  .hint-row{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-bottom: 18px;
+    font-style: italic;
+  }
+
+  .agency-list{
+    display: grid;
+    gap: 12px;
+  }
+
+  .agency-card{
+    display:flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: #fffdf7;
+    border: 1px solid #ddd0ab;
+    border-left: 5px solid var(--unverified);
+    border-radius: 6px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    text-align:left;
+    width: 100%;
+    font: inherit;
+  }
+  .agency-card:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  }
+  .agency-card.status-verified{ border-left-color: var(--verified); }
+  .agency-card.status-flagged{ border-left-color: var(--flagged); }
+
+  .agency-card .name{
+    font-weight: 700;
+    font-size: 15.5px;
+    margin: 0 0 3px;
+    color: var(--ink);
+  }
+  .agency-card .meta{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin:0;
+  }
+
+  .badge{
+    font-family: 'Courier Prime', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge.verified{ background: rgba(47,107,70,0.12); color: var(--verified); border: 1px solid var(--verified); }
+  .badge.flagged{ background: rgba(168,83,28,0.12); color: var(--flagged); border: 1px solid var(--flagged); }
+  .badge.unverified{ background: rgba(124,130,145,0.12); color: var(--unverified); border: 1px dashed var(--unverified); }
+
+  .empty-state{
+    text-align:center;
+    padding: 40px 20px;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+
+  /* --- detail view --- */
+  .back-btn{
+    background:none;
+    border:none;
+    font-family:'Courier Prime', monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+    cursor:pointer;
+    padding: 4px 0 18px;
+    display:flex;
+    align-items:center;
+    gap: 6px;
+  }
+  .back-btn:hover{ color: var(--seal-red); }
+
+  .detail-head{
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+    border-bottom: 1px dashed #cbbf9b;
+    padding-bottom: 20px;
+    margin-bottom: 22px;
+  }
+
+  .detail-head h2{
+    font-family: 'Special Elite', monospace;
+    font-size: 22px;
+    margin: 0 0 8px;
+    color: var(--ink);
+  }
+
+  .detail-meta{
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.8;
+  }
+  .detail-meta .license{
+    font-family:'Courier Prime', monospace;
+    background: #efe6cc;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: var(--ink);
+    font-weight:700;
+    letter-spacing: 0.5px;
+  }
+
+  /* stamp */
+  .stamp-wrap{
+    width: 140px; height: 140px;
+    flex-shrink: 0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .stamp{
+    width: 128px; height: 128px;
+    border-radius: 50%;
+    border: 4px double currentColor;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-family: 'Special Elite', monospace;
+    text-transform: uppercase;
+    text-align:center;
+    transform: scale(2.4) rotate(-18deg);
+    opacity: 0;
+    animation: stampIn 0.5s cubic-bezier(0.2, 1.6, 0.4, 1) 0.15s forwards;
+    mix-blend-mode: multiply;
+  }
+  .stamp.stamp-verified{ color: var(--verified); }
+  .stamp.stamp-flagged{ color: var(--flagged); }
+
+  .stamp .big{ font-size: 15px; line-height:1.15; padding: 0 10px; }
+  .stamp .small{ font-size: 8.5px; margin-top: 5px; letter-spacing: 1px; }
+  .stamp .star{ font-size: 11px; margin-top:3px; letter-spacing:3px; }
+
+  @keyframes stampIn{
+    0%{ transform: scale(2.6) rotate(-22deg); opacity:0; }
+    55%{ transform: scale(0.92) rotate(-8deg); opacity:1; }
+    75%{ transform: scale(1.06) rotate(-11deg); }
+    100%{ transform: scale(1) rotate(-9deg); opacity:1; }
+  }
+
+  .section-label{
+    font-family:'Courier Prime', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--ink-soft);
+    margin: 26px 0 10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .section-label::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background: #cbbf9b;
+  }
+
+  .complaint{
+    background: #fffdf7;
+    border: 1px solid #e0d5b3;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+  .complaint .date{
+    display:block;
+    font-family:'Courier Prime', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+  .no-complaints{
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    font-style: italic;
+    padding: 8px 2px;
+  }
+
+  form.inline-form{
+    margin-top: 8px;
+    display:grid;
+    gap: 10px;
+  }
+
+  button.primary-btn{
+    font-family:'Courier Prime', monospace;
+    font-weight:700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 13px;
+    background: var(--seal-red);
+    color: #fdf6e3;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+    justify-self: start;
+  }
+  button.primary-btn:hover{ filter: brightness(1.12); }
+  button.primary-btn:active{ filter: brightness(0.95); }
+
+  button.primary-btn.ghost{
+    background: transparent;
+    color: var(--seal-red);
+    border: 1.5px solid var(--seal-red);
+  }
+
+  /* --- report tab --- */
+  .report-form-wrap{
+    background: #fffdf7;
+    border: 1px solid #ddd0ab;
+    border-radius: 8px;
+    padding: 22px;
+    margin-bottom: 28px;
+  }
+  .report-form-wrap h3{
+    font-family:'Special Elite', monospace;
+    margin: 0 0 4px;
+    font-size: 17px;
+    color: var(--seal-red);
+  }
+  .report-form-wrap p.desc{
+    margin: 0 0 18px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  label{
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .field{ display:grid; gap:6px; }
+
+  .file-row{
+    display:flex;
+    align-items:center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .file-row input[type=file]{
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .file-chip{
+    font-family:'Courier Prime', monospace;
+    font-size: 11.5px;
+    background: rgba(47,107,70,0.12);
+    color: var(--verified);
+    border: 1px solid var(--verified);
+    padding: 3px 9px;
+    border-radius: 20px;
+    display:none;
+  }
+
+  .reports-feed{ display:grid; gap: 14px; }
+
+  .report-card{
+    background: #fffdf7;
+    border: 1.5px dashed var(--unverified);
+    border-radius: 8px;
+    padding: 16px 18px;
+    animation: fadeSlide 0.35s ease;
+  }
+  @keyframes fadeSlide{
+    from{ opacity:0; transform: translateY(-8px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  .report-card .top-row{
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .report-card .name{
+    font-weight:700;
+    font-size: 15px;
+    color: var(--ink);
+    margin:0;
+  }
+  .report-card .desc-text{
+    font-size: 13.5px;
+    color: var(--ink);
+    line-height: 1.55;
+    margin: 6px 0;
+  }
+  .report-card .foot{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+    font-family:'Courier Prime', monospace;
+  }
+  .evidence-tag{
+    color: var(--verified);
+  }
+
+  footer.disclaimer{
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 0 24px 50px;
+    font-size: 11.5px;
+    color: rgba(243,234,211,0.4);
+    line-height: 1.7;
+    position: relative;
+    z-index:1;
+  }
+
+  @media (max-width: 640px){
+    .search-row{ flex-direction: column; }
+    .detail-head{ flex-direction: column-reverse; }
+    h1{ font-size: 22px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .stamp{ animation: none; opacity:1; transform: scale(1) rotate(-9deg); }
+    .report-card{ animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-row">
+    <div class="brand">
+      <div class="brand-mark">प्र</div>
+      <div>
+        <h1>Praman</h1>
+        <p class="tagline">Foreign Employment Agency Registry</p>
+      </div>
+    </div>
+  </div>
+  <p class="subline">Check whether a manpower agency is on record before you pay any fee. Search verified licenses, review flagged reports, and warn others about suspicious agencies &mdash; this is a community prototype, not the official DoFE database.</p>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" id="tabBtnVerify" onclick="switchTab('verify')">Verify an Agency</button>
+  <button class="tab-btn" id="tabBtnReport" onclick="switchTab('report')">Report a Suspicious Agency</button>
+</nav>
+
+<main>
+
+  <!-- TAB 1 -->
+  <section id="tabVerify" class="panel">
+
+    <div id="listView">
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="Search agency name, e.g. &quot;Everest&quot; or &quot;Himal&quot;..." oninput="renderList()">
+      </div>
+      <p class="hint-row">Tip: try searching "Sunrise" &mdash; notice how one entry is verified and a similarly-named one is flagged. Scammers copy real names on purpose.</p>
+      <div class="agency-list" id="agencyList"></div>
+    </div>
+
+    <div id="detailView" class="hidden"></div>
+
+  </section>
+
+  <!-- TAB 2 -->
+  <section id="tabReport" class="panel hidden">
+
+    <div class="report-form-wrap">
+      <h3>Seen something suspicious?</h3>
+      <p class="desc">Submit what happened. This goes into a public, unverified feed for other jobseekers to see &mdash; it is not an official finding, and does not change any agency's verified/flagged status above.</p>
+
+      <form class="inline-form" id="reportForm" onsubmit="submitReport(event)">
+        <div class="field">
+          <label for="repName">Agency name</label>
+          <input type="text" id="repName" placeholder="Name as advertised to you" required>
+        </div>
+        <div class="field">
+          <label for="repDesc">What happened?</label>
+          <textarea id="repDesc" rows="4" placeholder="Describe the interaction, any fees requested, promises made, contact details used, etc." required></textarea>
+        </div>
+        <div class="field">
+          <label for="repFile">Evidence (optional)</label>
+          <div class="file-row">
+            <input type="file" id="repFile" onchange="handleFileSelect()">
+            <span class="file-chip" id="fileChip">1 file attached</span>
+          </div>
+        </div>
+        <button type="submit" class="primary-btn">Submit report</button>
+      </form>
+    </div>
+
+    <div class="section-label">Community reports &mdash; unverified</div>
+    <div class="reports-feed" id="reportsFeed"></div>
+
+  </section>
+
+</main>
+
+<footer class="disclaimer">
+  Prototype built for a hackathon demo. "Verified" and "Flagged" agency data below is fictional sample data for demonstration purposes only and does not reflect any real government registry. Community reports are unmoderated, unverified user submissions. Always cross-check with the official Department of Foreign Employment (DoFE), Nepal before making any payment.
+</footer>
+
+<script>
+  // ---------------------------------------------------------------
+  // DATA
+  // Verified = fictional-but-realistic sample entries, license format
+  //            [Serial]/[FiscalYearStart]/[FiscalYearEnd] (DoFE style)
+  // Flagged  = entirely fictional lookalike / scam entries, never a
+  //            real business. One deliberate lookalike pair included
+  //            (Sunrise Global Overseas / Sun-Rise Global Overseas).
+  // No "unlicensed" category is pre-seeded here on purpose.
+  // ---------------------------------------------------------------
+  let agencies = [
+    {
+      id: 1,
+      name: "Sunrise Global Overseas Pvt. Ltd.",
+      license: "614/069/070",
+      status: "verified",
+      location: "old bhandrapur road, birtamode, jhapa",
+      complaints: [
+        { text: "Processing fee took two weeks longer than quoted, but was refundable and fully explained in the contract.", date: "2 Mar 2025" }
+      ]
+    },
+    {
+      id: 2,
+      name: "Sun-Rise Global Overseas Consultancy",
+      license: "N/A — no valid license on file",
+      status: "flagged",
+      location: "Hanumancomplex building , muktichowk,birtamode, jhapa — address unverifiable",
+      complaints: [
+        { text: "Used a name and logo almost identical to a licensed agency, then asked for NPR 80,000 'visa guarantee' fee in cash before any job offer existed.", date: "18 Jan 2025" },
+        { text: "Phone number listed on their Facebook page was disconnected after payment was made.", date: "22 Jan 2025" }
+      ]
+    },
+    {
+      id: 3,
+      name: "Himalayan Manpower Services Pvt. Ltd.",
+      license: "302/058/059",
+      status: "verified",
+      location: "sainikmode, birtamode",
+      complaints: []
+    },
+    {
+      id: 4,
+      name: "Everest Career Link Overseas",
+      license: "781/071/072",
+      status: "verified",
+      location:"birtamode-4, jhapa"
+      complaints: [
+        { text: "Interview was rescheduled three times without clear communication.", date: "9 Nov 2024" }
+      ]
+    },
+    {
+      id: 5,
+      name: "Everest Career Bridge International",
+      license: "Unregistered entity — flagged on community reports",
+      status: "flagged",
+      location: "Operates via Facebook ads only, no listed office",
+      complaints: [
+        { text: "Promised a Dubai hospitality job with no interview and demanded NPR 150,000 upfront 'training fee'.", date: "4 Feb 2025" },
+        { text: "Deleted their Facebook page after multiple people asked for a receipt.", date: "10 Feb 2025" },
+        { text: "Same operators previously used the name 'Everest Gulf Careers' before rebranding.", date: "15 Feb 2025" }
+      ]
+    },
+    {
+      id: 6,
+      name: "Annapurna Overseas Employment Pvt. Ltd.",
+      license: "459/065/066",
+      status: "verified",
+      location: "damak, jhapa",
+      complaints: []
+    },
+    {
+      id: 7,
+      name: "Gulf Dream Recruiters",
+      license: "No DoFE license found",
+      status: "flagged",
+      location: "Address changes between postings",
+      complaints: [
+        { text: "Collected passports 'for processing' and became unreachable for three weeks afterward.", date: "30 Dec 2024" }
+      ]
+    },
+    {
+      id: 8,
+      name: "Lumbini Global Manpower Pvt. Ltd.",
+      license: "197/056/057",
+      status: "verified",
+      location: "citycenter, birtamode, jhapa",
+      complaints: [
+        { text: "Contract terms in Nepali and English didn't fully match; agency corrected it after being asked in writing.", date: "5 Jun 2024" }
+      ]
+    }
+  ];
+
+  let activeAgencyId = null;
+
+  let reports = [
+    {
+      id: 1,
+      name: "Golden Horizon Overseas",
+      desc: "Contacted me on TikTok offering a Korea factory job with 'no exam needed'. Asked for NPR 40,000 as a 'file registration' fee via personal eSewa account, not a company account.",
+      hasFile: true,
+      date: "20 Jul 2026"
+    },
+    {
+      id: 2,
+      name: "Prime Gulf Careers Nepal",
+      desc: "Office address given during the call does not exist at that location in Baneshwor. No signage, no staff recognized the name.",
+      hasFile: false,
+      date: "14 Jul 2026"
+    }
+  ];
+
+  // ---------------------------------------------------------------
+  // TAB SWITCHING
+  // ---------------------------------------------------------------
+  function switchTab(tab){
+    const verifyPanel = document.getElementById('tabVerify');
+    const reportPanel = document.getElementById('tabReport');
+    const btnVerify = document.getElementById('tabBtnVerify');
+    const btnReport = document.getElementById('tabBtnReport');
+
+    if(tab === 'verify'){
+      verifyPanel.classList.remove('hidden');
+      reportPanel.classList.add('hidden');
+      btnVerify.classList.add('active');
+      btnReport.classList.remove('active');
+    } else {
+      verifyPanel.classList.add('hidden');
+      reportPanel.classList.remove('hidden');
+      btnReport.classList.add('active');
+      btnVerify.classList.remove('active');
+      renderReports();
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // TAB 1: LIST + SEARCH
+  // ---------------------------------------------------------------
+  function renderList(){
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+    const container = document.getElementById('agencyList');
+    const filtered = agencies.filter(a => a.name.toLowerCase().includes(query));
+
+    if(filtered.length === 0){
+      container.innerHTML = `<div class="empty-state">No agencies match "${escapeHtml(query)}". Try a different spelling — scam agencies often use near-identical names.</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(a => `
+      <button class="agency-card status-${a.status}" onclick="openDetail(${a.id})">
+        <div>
+          <p class="name">${escapeHtml(a.name)}</p>
+          <p class="meta">${escapeHtml(a.location)}</p>
+        </div>
+        <span class="badge ${a.status}">${a.status === 'verified' ? '✓ Verified' : '⚠ Flagged'}</span>
+      </button>
+    `).join('');
+  }
+
+  // ---------------------------------------------------------------
+  // TAB 1: DETAIL VIEW
+  // ---------------------------------------------------------------
+  function openDetail(id){
+    activeAgencyId = id;
+    const a = agencies.find(x => x.id === id);
+    if(!a) return;
+
+    document.getElementById('listView').classList.add('hidden');
+    const detail = document.getElementById('detailView');
+    detail.classList.remove('hidden');
+
+    const isVerified = a.status === 'verified';
+    const stampClass = isVerified ? 'stamp-verified' : 'stamp-flagged';
+    const stampWord1 = isVerified ? 'VERIFIED' : 'FLAGGED';
+    const stampWord2 = isVerified ? 'DOFE RECORD' : 'COMMUNITY ALERT';
+
+    detail.innerHTML = `
+      <button class="back-btn" onclick="closeDetail()">&larr; Back to search</button>
+
+      <div class="detail-head">
+        <div>
+          <h2>${escapeHtml(a.name)}</h2>
+          <div class="detail-meta">
+            License No. <span class="license mono">${escapeHtml(a.license)}</span><br>
+            Location: ${escapeHtml(a.location)}<br>
+            Status: <strong style="color:${isVerified ? 'var(--verified)' : 'var(--flagged)'}">${isVerified ? 'Verified license on record' : 'Flagged by community reports'}</strong>
+          </div>
+        </div>
+        <div class="stamp-wrap">
+          <div class="stamp ${stampClass}">
+            <span class="big">${stampWord1}</span>
+            <span class="small">${stampWord2}</span>
+            <span class="star">★ ★ ★</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Complaint history</div>
+      <div id="complaintsList">
+        ${a.complaints.length === 0
+          ? '<p class="no-complaints">No complaints on record for this agency.</p>'
+          : a.complaints.map(c => `
+            <div class="complaint">
+              ${escapeHtml(c.text)}
+              <span class="date">Filed ${escapeHtml(c.date)}</span>
+            </div>
+          `).join('')
+        }
+      </div>
+
+      <div class="section-label">Add a complaint</div>
+      <form class="inline-form" onsubmit="addComplaint(event, ${a.id})">
+        <div class="field">
+          <label for="newComplaintText">Describe your experience</label>
+          <textarea id="newComplaintText" rows="3" placeholder="What happened with this agency?" required></textarea>
+        </div>
+        <button type="submit" class="primary-btn ghost">Add complaint</button>
+      </form>
+    `;
+  }
+
+  function closeDetail(){
+    activeAgencyId = null;
+    document.getElementById('detailView').classList.add('hidden');
+    document.getElementById('listView').classList.remove('hidden');
+  }
+
+  function addComplaint(event, agencyId){
+    event.preventDefault();
+    const textarea = document.getElementById('newComplaintText');
+    const text = textarea.value.trim();
+    if(!text) return;
+
+    const a = agencies.find(x => x.id === agencyId);
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    a.complaints.unshift({ text: text, date: dateStr + ' (just now)' });
+
+    const list = document.getElementById('complaintsList');
+    list.innerHTML = a.complaints.map(c => `
+      <div class="complaint">
+        ${escapeHtml(c.text)}
+        <span class="date">Filed ${escapeHtml(c.date)}</span>
+      </div>
+    `).join('');
+    textarea.value = '';
+  }
+
+  // ---------------------------------------------------------------
+  // TAB 2: REPORT FORM + FEED
+  // ---------------------------------------------------------------
+  let fileSelected = false;
+
+  function handleFileSelect(){
+    const fileInput = document.getElementById('repFile');
+    const chip = document.getElementById('fileChip');
+    fileSelected = fileInput.files && fileInput.files.length > 0;
+    chip.style.display = fileSelected ? 'inline-block' : 'none';
+    if(fileSelected){
+      chip.textContent = '📎 ' + fileInput.files[0].name;
+    }
+  }
+
+  function submitReport(event){
+    event.preventDefault();
+    const name = document.getElementById('repName').value.trim();
+    const desc = document.getElementById('repDesc').value.trim();
+    if(!name || !desc) return;
+
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    reports.unshift({
+      id: Date.now(),
+      name: name,
+      desc: desc,
+      hasFile: fileSelected,
+      date: dateStr
+    });
+
+    document.getElementById('reportForm').reset();
+    document.getElementById('fileChip').style.display = 'none';
+    fileSelected = false;
+
+    renderReports();
+  }
+
+  function renderReports(){
+    const feed = document.getElementById('reportsFeed');
+    if(reports.length === 0){
+      feed.innerHTML = '<div class="empty-state">No community reports yet.</div>';
+      return;
+    }
+    feed.innerHTML = reports.map(r => `
+      <div class="report-card">
+        <div class="top-row">
+          <p class="name">${escapeHtml(r.name)}</p>
+          <span class="badge unverified">Unverified — pending review</span>
+        </div>
+        <p class="desc-text">${escapeHtml(r.desc)}</p>
+        <div class="foot">
+          <span>Submitted ${escapeHtml(r.date)}</span>
+          ${r.hasFile ? '<span class="evidence-tag">📎 Evidence attached</span>' : '<span></span>'}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ---------------------------------------------------------------
+  // UTIL
+  // ---------------------------------------------------------------
+  function escapeHtml(str){
+    if(str === undefined || str === null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // ---------------------------------------------------------------
+  // INIT
+  // ---------------------------------------------------------------
+  renderList();
+  renderReports();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Praman | Foreign Employment Agency Verification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg-deep: #06060e;
+    --bg-surface: #0e0e1c;
+    --bg-card: #141428;
+    --bg-elevated: #1a1a36;
+    --border: #252548;
+    --border-glow: rgba(0, 229, 199, 0.15);
+    --cyan: #00e5c7;
+    --cyan-dim: rgba(0, 229, 199, 0.12);
+    --cyan-mid: rgba(0, 229, 199, 0.35);
+    --amber: #f0b429;
+    --amber-dim: rgba(240, 180, 41, 0.12);
+    --verified: #22c55e;
+    --verified-dim: rgba(34, 197, 94, 0.12);
+    --flagged: #ef4444;
+    --flagged-dim: rgba(239, 68, 68, 0.12);
+    --unverified: #6366f1;
+    --unverified-dim: rgba(99, 102, 241, 0.12);
+    --seal: #f43f5e;
+    --seal-dim: rgba(244, 63, 94, 0.15);
+    --text: #e8e4f0;
+    --text-dim: #8a8599;
+    --text-muted: #56516a;
+    --input-bg: #10102a;
+    --input-border: #2a2a55;
+  }
+
+  *{ box-sizing: border-box; margin:0; padding:0; }
+
+  html,body{ background: var(--bg-deep); color: var(--text); min-height:100vh; }
+
+  body{
+    font-family: 'DM Sans', sans-serif;
+    background:
+      radial-gradient(ellipse 800px 600px at 20% -15%, rgba(0,229,199,0.06), transparent 60%),
+      radial-gradient(ellipse 600px 400px at 90% 5%, rgba(99,102,241,0.05), transparent 55%),
+      var(--bg-deep);
+    background-attachment: fixed;
+  }
+
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    pointer-events:none;
+    opacity:0.03;
+    background-image:
+      repeating-linear-gradient(0deg, var(--cyan) 0 1px, transparent 1px 40px),
+      repeating-linear-gradient(90deg, var(--cyan) 0 1px, transparent 1px 40px);
+    z-index:0;
+  }
+
+  .mono{ font-family: 'Space Mono', monospace; }
+  .heading-font{ font-family: 'Space Grotesk', sans-serif; }
+
+  header.masthead{
+    position:relative; z-index:1;
+    max-width:980px; margin:0 auto;
+    padding:44px 24px 24px;
+    border-bottom:1px solid var(--border);
+  }
+
+  .masthead-row{
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:10px;
+  }
+
+  .brand{ display:flex; align-items:center; gap:14px; }
+
+  .brand-mark{
+    width:48px; height:48px;
+    border:2px solid var(--cyan);
+    border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif;
+    color:var(--cyan);
+    font-size:18px; font-weight:700;
+    flex-shrink:0;
+    background:var(--cyan-dim);
+    box-shadow:0 0 20px rgba(0,229,199,0.1);
+  }
+
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:30px; font-weight:700;
+    letter-spacing:-0.5px;
+    margin:0 0 2px;
+    color:var(--text);
+  }
+
+  .tagline{
+    margin:0;
+    font-size:12.5px;
+    color:var(--cyan);
+    letter-spacing:2px;
+    text-transform:uppercase;
+    font-weight:600;
+    font-family:'Space Mono',monospace;
+  }
+
+  .subline{
+    margin-top:16px;
+    color:var(--text-dim);
+    font-size:14.5px;
+    max-width:660px;
+    line-height:1.6;
+  }
+
+  nav.tabs{
+    position:relative; z-index:1;
+    max-width:980px; margin:0 auto;
+    padding:0 24px;
+    display:flex; gap:2px;
+    margin-top:8px;
+  }
+
+  .tab-btn{
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:12.5px;
+    letter-spacing:0.8px;
+    text-transform:uppercase;
+    background:transparent;
+    color:var(--text-muted);
+    border:1px solid transparent;
+    border-bottom:none;
+    padding:13px 22px;
+    cursor:pointer;
+    border-radius:10px 10px 0 0;
+    transition:all 0.2s ease;
+    position:relative; top:1px;
+  }
+
+  .tab-btn:hover{ color:var(--text-dim); }
+
+  .tab-btn.active{
+    color:var(--cyan);
+    background:var(--bg-surface);
+    border-color:var(--border);
+    box-shadow:0 -2px 12px rgba(0,229,199,0.06);
+  }
+
+  main{
+    position:relative; z-index:1;
+    max-width:980px; margin:0 auto;
+    padding:28px 24px 80px;
+  }
+
+  .panel{
+    background:var(--bg-surface);
+    color:var(--text);
+    border-radius:4px 14px 14px 14px;
+    border:1px solid var(--border);
+    box-shadow:0 24px 60px rgba(0,0,0,0.5), 0 0 40px rgba(0,229,199,0.03);
+    padding:30px;
+  }
+
+  .hidden{ display:none !important; }
+
+  .search-row{
+    display:flex; gap:10px; margin-bottom:18px;
+  }
+
+  input[type="text"], textarea, select{
+    font-family:'DM Sans',sans-serif;
+    font-size:14.5px;
+    padding:12px 16px;
+    border:1.5px solid var(--input-border);
+    border-radius:8px;
+    background:var(--input-bg);
+    color:var(--text);
+    width:100%;
+    transition:border-color 0.2s, box-shadow 0.2s;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus{
+    outline:none;
+    border-color:var(--cyan);
+    box-shadow:0 0 0 3px var(--cyan-dim), 0 0 16px rgba(0,229,199,0.08);
+  }
+
+  .search-row input{ flex:1; }
+
+  .hint-row{
+    font-size:12.5px;
+    color:var(--text-muted);
+    margin-bottom:18px;
+    font-style:italic;
+    padding-left:2px;
+  }
+
+  .agency-list{ display:grid; gap:10px; }
+
+  .agency-card{
+    display:flex;
+    align-items:center; justify-content:space-between;
+    gap:16px;
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    border-left:4px solid var(--text-muted);
+    border-radius:8px;
+    padding:16px 20px;
+    cursor:pointer;
+    transition:all 0.15s ease;
+    text-align:left;
+    width:100%; font:inherit;
+  }
+  .agency-card:hover{
+    transform:translateY(-2px);
+    box-shadow:0 8px 24px rgba(0,0,0,0.3);
+    border-color:var(--border-glow);
+  }
+  .agency-card.status-verified{ border-left-color:var(--verified); }
+  .agency-card.status-flagged{ border-left-color:var(--flagged); }
+  .agency-card.status-under_review{ border-left-color:var(--amber); }
+
+  .agency-card .name{
+    font-weight:700; font-size:15.5px;
+    margin:0 0 3px; color:var(--text);
+  }
+  .agency-card .meta{
+    font-size:12.5px; color:var(--text-dim); margin:0;
+  }
+
+  .badge{
+    font-family:'Space Mono',monospace;
+    font-size:10.5px; font-weight:700;
+    letter-spacing:0.8px;
+    text-transform:uppercase;
+    padding:5px 12px;
+    border-radius:20px;
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  .badge.verified{ background:var(--verified-dim); color:var(--verified); border:1px solid rgba(34,197,94,0.3); }
+  .badge.flagged{ background:var(--flagged-dim); color:var(--flagged); border:1px solid rgba(239,68,68,0.3); }
+  .badge.under_review{ background:var(--amber-dim); color:var(--amber); border:1px solid rgba(240,180,41,0.3); }
+  .badge.unverified{ background:var(--unverified-dim); color:var(--unverified); border:1px dashed rgba(99,102,241,0.4); }
+
+  .evidence-link{
+    color:var(--cyan);
+    text-decoration:none;
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+  }
+  .evidence-link:hover{ text-decoration:underline; }
+
+  .empty-state{
+    text-align:center; padding:44px 20px;
+    color:var(--text-muted); font-size:14px;
+  }
+
+  .back-btn{
+    background:none; border:none;
+    font-family:'Space Mono',monospace;
+    font-size:13px; color:var(--text-dim);
+    cursor:pointer;
+    padding:4px 0 20px;
+    display:flex; align-items:center; gap:6px;
+    transition:color 0.15s;
+  }
+  .back-btn:hover{ color:var(--seal); }
+
+  .detail-head{
+    display:flex; justify-content:space-between;
+    align-items:flex-start; gap:20px; flex-wrap:wrap;
+    border-bottom:1px solid var(--border);
+    padding-bottom:22px; margin-bottom:24px;
+  }
+
+  .detail-head h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:23px; font-weight:700;
+    margin:0 0 10px; color:var(--text);
+  }
+
+  .detail-meta{
+    font-size:13.5px; color:var(--text-dim); line-height:1.9;
+  }
+  .detail-meta .license{
+    font-family:'Space Mono',monospace;
+    background:var(--cyan-dim);
+    padding:3px 10px; border-radius:5px;
+    color:var(--cyan); font-weight:700;
+    letter-spacing:0.5px;
+  }
+
+  .stamp-wrap{
+    width:140px; height:140px;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .stamp{
+    width:132px; height:132px;
+    border-radius:50%;
+    border:4px double currentColor;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif;
+    text-transform:uppercase;
+    text-align:center;
+    transform:scale(2.4) rotate(-18deg);
+    opacity:0;
+    animation:stampIn 0.5s cubic-bezier(0.2,1.6,0.4,1) 0.15s forwards;
+  }
+  .stamp.stamp-verified{ color:var(--verified); background:rgba(34,197,94,0.04); }
+  .stamp.stamp-flagged{ color:var(--flagged); background:rgba(239,68,68,0.04); }
+
+  .stamp .big{ font-size:16px; line-height:1.15; padding:0 10px; font-weight:700; }
+  .stamp .small{ font-size:8px; margin-top:6px; letter-spacing:1.5px; font-weight:600; }
+  .stamp .star{ font-size:10px; margin-top:4px; letter-spacing:4px; }
+
+  @keyframes stampIn{
+    0%{ transform:scale(2.6) rotate(-22deg); opacity:0; }
+    55%{ transform:scale(0.92) rotate(-8deg); opacity:1; }
+    75%{ transform:scale(1.06) rotate(-11deg); }
+    100%{ transform:scale(1) rotate(-9deg); opacity:1; }
+  }
+
+  .section-label{
+    font-family:'Space Mono',monospace;
+    font-size:11.5px; text-transform:uppercase;
+    letter-spacing:1.4px; color:var(--text-muted);
+    margin:28px 0 12px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-label::after{
+    content:""; flex:1; height:1px;
+    background:var(--border);
+  }
+
+  .complaint{
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:14px 16px;
+    margin-bottom:8px;
+    font-size:13.5px; line-height:1.55;
+  }
+  .complaint .date{
+    display:block;
+    font-family:'Space Mono',monospace;
+    font-size:11px; color:var(--text-muted);
+    margin-top:6px;
+  }
+  .no-complaints{
+    font-size:13.5px; color:var(--text-muted);
+    font-style:italic; padding:8px 2px;
+  }
+
+  form.inline-form{
+    margin-top:8px; display:grid; gap:10px;
+  }
+
+  button.primary-btn{
+    font-family:'Space Mono',monospace;
+    font-weight:700; letter-spacing:0.5px;
+    text-transform:uppercase; font-size:12.5px;
+    background:var(--seal);
+    color:#fff;
+    border:none; border-radius:8px;
+    padding:13px 22px;
+    cursor:pointer;
+    transition:all 0.15s ease;
+    justify-self:start;
+  }
+  button.primary-btn:hover{
+    filter:brightness(1.15);
+    box-shadow:0 4px 20px rgba(244,63,94,0.3);
+  }
+  button.primary-btn:active{ filter:brightness(0.9); }
+
+  button.primary-btn.ghost{
+    background:transparent;
+    color:var(--seal);
+    border:1.5px solid var(--seal);
+  }
+  button.primary-btn.ghost:hover{
+    background:var(--seal-dim);
+  }
+
+  .report-form-wrap{
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:24px;
+    margin-bottom:28px;
+  }
+  .report-form-wrap h3{
+    font-family:'Space Grotesk',sans-serif;
+    margin:0 0 6px; font-size:18px;
+    color:var(--seal); font-weight:700;
+  }
+  .report-form-wrap p.desc{
+    margin:0 0 20px; font-size:13px;
+    color:var(--text-dim);
+  }
+
+  label{
+    font-size:12px; font-weight:600;
+    color:var(--text-dim);
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+    font-family:'Space Mono',monospace;
+  }
+  .field{ display:grid; gap:7px; }
+
+  .file-row{
+    display:flex; align-items:center;
+    gap:10px; flex-wrap:wrap;
+  }
+  .file-row input[type=file]{
+    font-size:13px; color:var(--text-dim);
+  }
+  .file-chip{
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    background:var(--verified-dim);
+    color:var(--verified);
+    border:1px solid rgba(34,197,94,0.3);
+    padding:3px 10px;
+    border-radius:20px;
+    display:none;
+  }
+
+  .reports-feed{ display:grid; gap:12px; }
+
+  .report-card{
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    border-left:4px solid var(--unverified);
+    border-radius:8px;
+    padding:18px 20px;
+    animation:fadeSlide 0.35s ease;
+  }
+  @keyframes fadeSlide{
+    from{ opacity:0; transform:translateY(-8px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+
+  .report-card .top-row{
+    display:flex; justify-content:space-between;
+    align-items:flex-start; gap:10px;
+    margin-bottom:8px;
+  }
+  .report-card .name{
+    font-weight:700; font-size:15px;
+    color:var(--text); margin:0;
+  }
+  .report-card .desc-text{
+    font-size:13.5px; color:var(--text-dim);
+    line-height:1.6; margin:6px 0;
+  }
+  .report-card .foot{
+    display:flex; justify-content:space-between;
+    align-items:center; font-size:11px;
+    color:var(--text-muted); margin-top:10px;
+    font-family:'Space Mono',monospace;
+  }
+  .evidence-tag{ color:var(--cyan); }
+
+  footer.disclaimer{
+    max-width:980px; margin:0 auto;
+    padding:0 24px 50px;
+    font-size:11.5px;
+    color:var(--text-muted);
+    line-height:1.7;
+    position:relative; z-index:1;
+  }
+
+  @media(max-width:640px){
+    .search-row{ flex-direction:column; }
+    .detail-head{ flex-direction:column-reverse; }
+    h1{ font-size:24px; }
+    .panel{ padding:22px; }
+  }
+
+  @media(prefers-reduced-motion:reduce){
+    .stamp{ animation:none; opacity:1; transform:scale(1) rotate(-9deg); }
+    .report-card{ animation:none; }
+  }
+
+  .loading-state{
+    text-align:center; padding:40px 20px;
+    color:var(--text-muted); font-size:14px;
+  }
+  .loading-state::before{
+    content:"";
+    display:inline-block;
+    width:18px; height:18px;
+    border:2px solid var(--border);
+    border-top-color:var(--cyan);
+    border-radius:50%;
+    animation:spin 0.7s linear infinite;
+    vertical-align:middle;
+    margin-right:8px;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .toast{
+    position:fixed; bottom:24px; right:24px;
+    padding:14px 22px;
+    border-radius:10px;
+    font-size:13.5px; font-weight:500;
+    z-index:9999;
+    animation:toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+    max-width:380px;
+    box-shadow:0 8px 30px rgba(0,0,0,0.4);
+  }
+  .toast.success{
+    background:var(--bg-card);
+    border:1px solid rgba(34,197,94,0.4);
+    color:var(--verified);
+  }
+  .toast.error{
+    background:var(--bg-card);
+    border:1px solid rgba(239,68,68,0.4);
+    color:var(--flagged);
+  }
+  @keyframes toastIn{
+    from{ opacity:0; transform:translateY(12px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @keyframes toastOut{
+    from{ opacity:1; }
+    to{ opacity:0; pointer-events:none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-row">
+    <div class="brand">
+      <div class="brand-mark">प्र</div>
+      <div>
+        <h1>Praman</h1>
+        <p class="tagline">Foreign Employment Agency Registry</p>
+      </div>
+    </div>
+  </div>
+  <p class="subline">Check whether a manpower agency is on record before you pay any fee. Search verified licenses, review flagged reports, and warn others about suspicious agencies &mdash; this is a community prototype, not the official DoFE database.</p>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" id="tabBtnVerify" onclick="switchTab('verify')">Verify an Agency</button>
+  <button class="tab-btn" id="tabBtnReport" onclick="switchTab('report')">Report a Suspicious Agency</button>
+</nav>
+
+<main>
+
+  <section id="tabVerify" class="panel">
+
+    <div id="listView">
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="Search agency name, e.g. &quot;Everest&quot; or &quot;Himal&quot;..." oninput="renderList()">
+      </div>
+      <p class="hint-row">Tip: try searching "Sunrise" &mdash; notice how one entry is verified and a similarly-named one is flagged. Scammers copy real names on purpose.</p>
+      <div class="agency-list" id="agencyList"></div>
+    </div>
+
+    <div id="detailView" class="hidden"></div>
+
+  </section>
+
+  <section id="tabReport" class="panel hidden">
+
+    <div class="report-form-wrap">
+      <h3>Seen something suspicious?</h3>
+      <p class="desc">Submit what happened. This goes into a public, unverified feed for other jobseekers to see &mdash; it is not an official finding, and does not change any agency's verified/flagged status above.</p>
+
+      <form class="inline-form" id="reportForm" onsubmit="submitReport(event)">
+        <div class="field">
+          <label for="repName">Agency name</label>
+          <input type="text" id="repName" placeholder="Name as advertised to you" required>
+        </div>
+        <div class="field">
+          <label for="repDesc">What happened?</label>
+          <textarea id="repDesc" rows="4" placeholder="Describe the interaction, any fees requested, promises made, contact details used, etc." required></textarea>
+        </div>
+        <div class="field">
+          <label for="repFile">Evidence (optional)</label>
+          <div class="file-row">
+            <input type="file" id="repFile" onchange="handleFileSelect()">
+            <span class="file-chip" id="fileChip">1 file attached</span>
+          </div>
+        </div>
+        <button type="submit" class="primary-btn">Submit report</button>
+      </form>
+    </div>
+
+    <div class="section-label">Community reports &mdash; unverified</div>
+    <div class="reports-feed" id="reportsFeed"></div>
+
+  </section>
+
+</main>
+
+<footer class="disclaimer">
+  Prototype built for a hackathon demo. "Verified" and "Flagged" agency data below is fictional sample data for demonstration purposes only and does not reflect any real government registry. Community reports are unmoderated, unverified user submissions. Always cross-check with the official Department of Foreign Employment (DoFE), Nepal before making any payment.
+</footer>
+
+<script>
+  // ---------------------------------------------------------------
+  // SUPABASE INIT
+  // ---------------------------------------------------------------
+  const SUPABASE_URL = 'https://yetodcrrrekjqudecyop.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlldG9kY3JycmVranF1ZGVjeW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4NzQ0NjgsImV4cCI6MjEwMDQ1MDQ2OH0.pNQbb6rXP0I1SAXWf7JhvnDXv5kHoyl_sxdnbuhB2AI';
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  // ---------------------------------------------------------------
+  // STATE
+  // ---------------------------------------------------------------
+  let agenciesCache = [];
+  let activeAgencyId = null;
+  let fileSelected = false;
+
+  // ---------------------------------------------------------------
+  // TOAST
+  // ---------------------------------------------------------------
+  function showToast(msg, type = 'success'){
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+
+  // ---------------------------------------------------------------
+  // TAB SWITCHING
+  // ---------------------------------------------------------------
+  function switchTab(tab){
+    const verifyPanel = document.getElementById('tabVerify');
+    const reportPanel = document.getElementById('tabReport');
+    const btnVerify = document.getElementById('tabBtnVerify');
+    const btnReport = document.getElementById('tabBtnReport');
+
+    if(tab === 'verify'){
+      verifyPanel.classList.remove('hidden');
+      reportPanel.classList.add('hidden');
+      btnVerify.classList.add('active');
+      btnReport.classList.remove('active');
+    } else {
+      verifyPanel.classList.add('hidden');
+      reportPanel.classList.remove('hidden');
+      btnReport.classList.add('active');
+      btnVerify.classList.remove('active');
+      renderReports();
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // TAB 1: LIST + SEARCH
+  // ---------------------------------------------------------------
+  async function loadAgencies(){
+    const { data, error } = await db
+      .from('agencies')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if(error){
+      console.error('Failed to load agencies:', error);
+      showToast('Failed to load agencies. Check console.', 'error');
+      agenciesCache = [];
+    } else {
+      agenciesCache = data || [];
+    }
+  }
+
+  async function renderList(){
+    const container = document.getElementById('agencyList');
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+    if(agenciesCache.length === 0 && !query){
+      container.innerHTML = '<div class="loading-state">Loading agencies...</div>';
+      await loadAgencies();
+    }
+
+    const filtered = agenciesCache.filter(a => a.name.toLowerCase().includes(query));
+
+    if(filtered.length === 0){
+      container.innerHTML = `<div class="empty-state">No agencies match "${escapeHtml(query)}". Try a different spelling — scam agencies often use near-identical names.</div>`;
+      return;
+    }
+
+    const statusLabels = { verified: '✓ Verified', flagged: '⚠ Flagged', under_review: '🔍 Under Review' };
+
+    container.innerHTML = filtered.map(a => `
+      <button class="agency-card status-${a.status}" onclick="openDetail('${a.id}')">
+        <div>
+          <p class="name">${escapeHtml(a.name)}</p>
+          <p class="meta">${escapeHtml(a.location)}</p>
+        </div>
+        <span class="badge ${a.status}">${statusLabels[a.status] || a.status}</span>
+      </button>
+    `).join('');
+  }
+
+  // ---------------------------------------------------------------
+  // TAB 1: DETAIL VIEW
+  // ---------------------------------------------------------------
+  async function openDetail(id){
+    activeAgencyId = id;
+
+    document.getElementById('listView').classList.add('hidden');
+    const detail = document.getElementById('detailView');
+    detail.classList.remove('hidden');
+    detail.innerHTML = '<div class="loading-state">Loading agency details...</div>';
+
+    const { data: a, error: aErr } = await db
+      .from('agencies')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if(aErr || !a){
+      console.error('Failed to load agency:', aErr);
+      detail.innerHTML = '<div class="empty-state">Agency not found.</div>';
+      return;
+    }
+
+    const { data: complaints, error: cErr } = await db
+      .from('complaints')
+      .select('*')
+      .eq('agency_id', id)
+      .order('created_at', { ascending: false });
+
+    const complaintList = cErr ? [] : (complaints || []);
+
+    const statusConfig = {
+      verified:    { stampClass:'stamp-verified', word1:'VERIFIED',   word2:'DOFE RECORD',      color:'var(--verified)', label:'Verified license on record' },
+      flagged:     { stampClass:'stamp-flagged',  word1:'FLAGGED',    word2:'COMMUNITY ALERT',   color:'var(--flagged)',  label:'Flagged by community reports' },
+      under_review:{ stampClass:'stamp-flagged',  word1:'UNDER REVIEW', word2:'10+ REPORTS filed', color:'var(--amber)',   label:'Under review — 10+ community reports' }
+    };
+    const cfg = statusConfig[a.status] || statusConfig.flagged;
+
+    detail.innerHTML = `
+      <button class="back-btn" onclick="closeDetail()">&larr; Back to search</button>
+
+      <div class="detail-head">
+        <div>
+          <h2>${escapeHtml(a.name)}</h2>
+          <div class="detail-meta">
+            License No. <span class="license mono">${escapeHtml(a.license)}</span><br>
+            Location: ${escapeHtml(a.location)}<br>
+            Status: <strong style="color:${cfg.color}">${cfg.label}</strong>
+          </div>
+        </div>
+        <div class="stamp-wrap">
+          <div class="stamp ${cfg.stampClass}">
+            <span class="big">${cfg.word1}</span>
+            <span class="small">${cfg.word2}</span>
+            <span class="star">★ ★ ★</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Complaint history</div>
+      <div id="complaintsList">
+        ${complaintList.length === 0
+          ? '<p class="no-complaints">No complaints on record for this agency.</p>'
+          : complaintList.map(c => `
+            <div class="complaint">
+              ${escapeHtml(c.text)}
+              <span class="date">Filed ${escapeHtml(c.date)}</span>
+            </div>
+          `).join('')
+        }
+      </div>
+
+      <div class="section-label">Add a complaint</div>
+      <form class="inline-form" onsubmit="addComplaint(event, '${a.id}')">
+        <div class="field">
+          <label for="newComplaintText">Describe your experience</label>
+          <textarea id="newComplaintText" rows="3" placeholder="What happened with this agency?" required></textarea>
+        </div>
+        <button type="submit" class="primary-btn ghost">Add complaint</button>
+      </form>
+    `;
+  }
+
+  function closeDetail(){
+    activeAgencyId = null;
+    document.getElementById('detailView').classList.add('hidden');
+    document.getElementById('listView').classList.remove('hidden');
+  }
+
+  async function addComplaint(event, agencyId){
+    event.preventDefault();
+    const textarea = document.getElementById('newComplaintText');
+    const text = textarea.value.trim();
+    if(!text) return;
+
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' (just now)';
+
+    const { error } = await db
+      .from('complaints')
+      .insert({ agency_id: agencyId, text: text, date: dateStr });
+
+    if(error){
+      console.error('Failed to add complaint:', error);
+      showToast('Failed to submit complaint.', 'error');
+      return;
+    }
+
+    showToast('Complaint submitted.');
+    textarea.value = '';
+
+    const { data: complaints } = await db
+      .from('complaints')
+      .select('*')
+      .eq('agency_id', agencyId)
+      .order('created_at', { ascending: false });
+
+    const list = document.getElementById('complaintsList');
+    if(list && complaints){
+      list.innerHTML = complaints.length === 0
+        ? '<p class="no-complaints">No complaints on record for this agency.</p>'
+        : complaints.map(c => `
+          <div class="complaint">
+            ${escapeHtml(c.text)}
+            <span class="date">Filed ${escapeHtml(c.date)}</span>
+          </div>
+        `).join('');
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // TAB 2: REPORT FORM + FEED
+  // ---------------------------------------------------------------
+  function handleFileSelect(){
+    const fileInput = document.getElementById('repFile');
+    const chip = document.getElementById('fileChip');
+    fileSelected = fileInput.files && fileInput.files.length > 0;
+    chip.style.display = fileSelected ? 'inline-block' : 'none';
+    if(fileSelected){
+      chip.textContent = '📎 ' + fileInput.files[0].name;
+    }
+  }
+
+  async function submitReport(event){
+    event.preventDefault();
+    const name = document.getElementById('repName').value.trim();
+    const desc = document.getElementById('repDesc').value.trim();
+    if(!name || !desc) return;
+
+    const submitBtn = document.querySelector('#reportForm .primary-btn');
+    submitBtn.textContent = 'Submitting...';
+    submitBtn.disabled = true;
+
+    let evidenceUrl = '';
+    const fileInput = document.getElementById('repFile');
+    if(fileInput.files && fileInput.files.length > 0){
+      const file = fileInput.files[0];
+      const fileExt = file.name.split('.').pop();
+      const filePath = 'evidence/' + Date.now() + '_' + Math.random().toString(36).slice(2,8) + '.' + fileExt;
+
+      const { error: uploadErr } = await db.storage
+        .from('evidence')
+        .upload(filePath, file);
+
+      if(uploadErr){
+        console.error('Upload failed:', uploadErr);
+        showToast('Upload failed: ' + (uploadErr.message || 'Unknown error'), 'error');
+      } else {
+        const { data: urlData } = db.storage
+          .from('evidence')
+          .getPublicUrl(filePath);
+        evidenceUrl = urlData.publicUrl;
+      }
+    }
+
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    const { error } = await db
+      .from('reports')
+      .insert({
+        name: name,
+        description: desc,
+        has_file: evidenceUrl !== '',
+        evidence_url: evidenceUrl,
+        date: dateStr
+      });
+
+    submitBtn.textContent = 'Submit report';
+    submitBtn.disabled = false;
+
+    if(error){
+      console.error('Failed to submit report:', error);
+      showToast('Failed to submit report.', 'error');
+      return;
+    }
+
+    document.getElementById('reportForm').reset();
+    document.getElementById('fileChip').style.display = 'none';
+    fileSelected = false;
+
+    const { count } = await db
+      .from('reports')
+      .select('*', { count: 'exact', head: true })
+      .ilike('name', name);
+
+    if(count >= 10){
+      await db
+        .from('agencies')
+        .update({ status: 'under_review' })
+        .ilike('name', name)
+        .eq('status', 'verified');
+      await loadAgencies();
+      showToast('Report submitted. This agency is now under review (10+ reports).');
+    } else {
+      showToast('Report submitted successfully.');
+    }
+
+    renderReports();
+  }
+
+  async function renderReports(){
+    const feed = document.getElementById('reportsFeed');
+    feed.innerHTML = '<div class="loading-state">Loading reports...</div>';
+
+    const { data: reports, error } = await db
+      .from('reports')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if(error){
+      console.error('Failed to load reports:', error);
+      feed.innerHTML = '<div class="empty-state">Failed to load reports.</div>';
+      return;
+    }
+
+    if(!reports || reports.length === 0){
+      feed.innerHTML = '<div class="empty-state">No community reports yet.</div>';
+      return;
+    }
+
+    feed.innerHTML = reports.map(r => `
+      <div class="report-card">
+        <div class="top-row">
+          <p class="name">${escapeHtml(r.name)}</p>
+          <span class="badge unverified">Unverified — pending review</span>
+        </div>
+        <p class="desc-text">${escapeHtml(r.description)}</p>
+        <div class="foot">
+          <span>Submitted ${escapeHtml(r.date)}</span>
+          ${r.evidence_url ? '<a class="evidence-link" href="' + escapeHtml(r.evidence_url) + '" target="_blank" rel="noopener">📎 View evidence</a>' : (r.has_file ? '<span class="evidence-tag">📎 Evidence attached</span>' : '<span></span>')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ---------------------------------------------------------------
+  // UTIL
+  // ---------------------------------------------------------------
+  function escapeHtml(str){
+    if(str === undefined || str === null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // ---------------------------------------------------------------
+  // INIT
+  // ---------------------------------------------------------------
+  renderList();
+</script>
+
+</body>
+</html>
