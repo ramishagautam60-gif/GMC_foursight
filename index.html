@@ -611,5 +611,376 @@
   Prototype built for a hackathon demo. "Verified" and "Flagged" agency data below is fictional sample data for demonstration purposes only and does not reflect any real government registry. Community reports are unmoderated, unverified user submissions. Always cross-check with the official Department of Foreign Employment (DoFE), Nepal before making any payment.
 </footer>
 
+<script>
+  // ---------------------------------------------------------------
+  // SUPABASE INIT
+  // ---------------------------------------------------------------
+  const SUPABASE_URL = 'https://yetodcrrrekjqudecyop.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlldG9kY3JycmVranF1ZGVjeW9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ4NzQ0NjgsImV4cCI6MjEwMDQ1MDQ2OH0.pNQbb6rXP0I1SAXWf7JhvnDXv5kHoyl_sxdnbuhB2AI';
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  // ---------------------------------------------------------------
+  // STATE
+  // ---------------------------------------------------------------
+  let agenciesCache = [];
+  let activeAgencyId = null;
+  let fileSelected = false;
+
+  // ---------------------------------------------------------------
+  // TOAST
+  // ---------------------------------------------------------------
+  function showToast(msg, type = 'success'){
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3200);
+  }
+
+  // ---------------------------------------------------------------
+  // TAB SWITCHING
+  // ---------------------------------------------------------------
+  function switchTab(tab){
+    const verifyPanel = document.getElementById('tabVerify');
+    const reportPanel = document.getElementById('tabReport');
+    const btnVerify = document.getElementById('tabBtnVerify');
+    const btnReport = document.getElementById('tabBtnReport');
+
+    if(tab === 'verify'){
+      verifyPanel.classList.remove('hidden');
+      reportPanel.classList.add('hidden');
+      btnVerify.classList.add('active');
+      btnReport.classList.remove('active');
+    } else {
+      verifyPanel.classList.add('hidden');
+      reportPanel.classList.remove('hidden');
+      btnReport.classList.add('active');
+      btnVerify.classList.remove('active');
+      renderReports();
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // TAB 1: LIST + SEARCH
+  // ---------------------------------------------------------------
+  async function loadAgencies(){
+    const { data, error } = await db
+      .from('agencies')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if(error){
+      console.error('Failed to load agencies:', error);
+      showToast('Failed to load agencies. Check console.', 'error');
+      agenciesCache = [];
+    } else {
+      agenciesCache = data || [];
+    }
+  }
+
+  async function renderList(){
+    const container = document.getElementById('agencyList');
+    const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+    if(agenciesCache.length === 0 && !query){
+      container.innerHTML = '<div class="loading-state">Loading agencies...</div>';
+      await loadAgencies();
+    }
+
+    const filtered = agenciesCache.filter(a => a.name.toLowerCase().includes(query));
+
+    if(filtered.length === 0){
+      container.innerHTML = `<div class="empty-state">No agencies match "${escapeHtml(query)}". Try a different spelling — scam agencies often use near-identical names.</div>`;
+      return;
+    }
+
+    const statusLabels = { verified: '✓ Verified', flagged: '⚠ Flagged', under_review: '🔍 Under Review' };
+
+    container.innerHTML = filtered.map(a => `
+      <button class="agency-card status-${a.status}" onclick="openDetail('${a.id}')">
+        <div>
+          <p class="name">${escapeHtml(a.name)}</p>
+          <p class="meta">${escapeHtml(a.location)}</p>
+        </div>
+        <span class="badge ${a.status}">${statusLabels[a.status] || a.status}</span>
+      </button>
+    `).join('');
+  }
+
+  // ---------------------------------------------------------------
+  // TAB 1: DETAIL VIEW
+  // ---------------------------------------------------------------
+  async function openDetail(id){
+    activeAgencyId = id;
+
+    document.getElementById('listView').classList.add('hidden');
+    const detail = document.getElementById('detailView');
+    detail.classList.remove('hidden');
+    detail.innerHTML = '<div class="loading-state">Loading agency details...</div>';
+
+    const { data: a, error: aErr } = await db
+      .from('agencies')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if(aErr || !a){
+      console.error('Failed to load agency:', aErr);
+      detail.innerHTML = '<div class="empty-state">Agency not found.</div>';
+      return;
+    }
+
+    const { data: complaints, error: cErr } = await db
+      .from('complaints')
+      .select('*')
+      .eq('agency_id', id)
+      .order('created_at', { ascending: false });
+
+    const complaintList = cErr ? [] : (complaints || []);
+
+    const statusConfig = {
+      verified:    { stampClass:'stamp-verified', word1:'VERIFIED',   word2:'DOFE RECORD',      color:'var(--verified)', label:'Verified license on record' },
+      flagged:     { stampClass:'stamp-flagged',  word1:'FLAGGED',    word2:'COMMUNITY ALERT',   color:'var(--flagged)',  label:'Flagged by community reports' },
+      under_review:{ stampClass:'stamp-flagged',  word1:'UNDER REVIEW', word2:'10+ REPORTS filed', color:'var(--amber)',   label:'Under review — 10+ community reports' }
+    };
+    const cfg = statusConfig[a.status] || statusConfig.flagged;
+
+    detail.innerHTML = `
+      <button class="back-btn" onclick="closeDetail()">&larr; Back to search</button>
+
+      <div class="detail-head">
+        <div>
+          <h2>${escapeHtml(a.name)}</h2>
+          <div class="detail-meta">
+            License No. <span class="license mono">${escapeHtml(a.license)}</span><br>
+            Location: ${escapeHtml(a.location)}<br>
+            Status: <strong style="color:${cfg.color}">${cfg.label}</strong>
+          </div>
+        </div>
+        <div class="stamp-wrap">
+          <div class="stamp ${cfg.stampClass}">
+            <span class="big">${cfg.word1}</span>
+            <span class="small">${cfg.word2}</span>
+            <span class="star">★ ★ ★</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Complaint history</div>
+      <div id="complaintsList">
+        ${complaintList.length === 0
+          ? '<p class="no-complaints">No complaints on record for this agency.</p>'
+          : complaintList.map(c => `
+            <div class="complaint">
+              ${escapeHtml(c.text)}
+              <span class="date">Filed ${escapeHtml(c.date)}</span>
+            </div>
+          `).join('')
+        }
+      </div>
+
+      <div class="section-label">Add a complaint</div>
+      <form class="inline-form" onsubmit="addComplaint(event, '${a.id}')">
+        <div class="field">
+          <label for="newComplaintText">Describe your experience</label>
+          <textarea id="newComplaintText" rows="3" placeholder="What happened with this agency?" required></textarea>
+        </div>
+        <button type="submit" class="primary-btn ghost">Add complaint</button>
+      </form>
+    `;
+  }
+
+  function closeDetail(){
+    activeAgencyId = null;
+    document.getElementById('detailView').classList.add('hidden');
+    document.getElementById('listView').classList.remove('hidden');
+  }
+
+  async function addComplaint(event, agencyId){
+    event.preventDefault();
+    const textarea = document.getElementById('newComplaintText');
+    const text = textarea.value.trim();
+    if(!text) return;
+
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' (just now)';
+
+    const { error } = await db
+      .from('complaints')
+      .insert({ agency_id: agencyId, text: text, date: dateStr });
+
+    if(error){
+      console.error('Failed to add complaint:', error);
+      showToast('Failed to submit complaint.', 'error');
+      return;
+    }
+
+    showToast('Complaint submitted.');
+    textarea.value = '';
+
+    const { data: complaints } = await db
+      .from('complaints')
+      .select('*')
+      .eq('agency_id', agencyId)
+      .order('created_at', { ascending: false });
+
+    const list = document.getElementById('complaintsList');
+    if(list && complaints){
+      list.innerHTML = complaints.length === 0
+        ? '<p class="no-complaints">No complaints on record for this agency.</p>'
+        : complaints.map(c => `
+          <div class="complaint">
+            ${escapeHtml(c.text)}
+            <span class="date">Filed ${escapeHtml(c.date)}</span>
+          </div>
+        `).join('');
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // TAB 2: REPORT FORM + FEED
+  // ---------------------------------------------------------------
+  function handleFileSelect(){
+    const fileInput = document.getElementById('repFile');
+    const chip = document.getElementById('fileChip');
+    fileSelected = fileInput.files && fileInput.files.length > 0;
+    chip.style.display = fileSelected ? 'inline-block' : 'none';
+    if(fileSelected){
+      chip.textContent = '📎 ' + fileInput.files[0].name;
+    }
+  }
+
+  async function submitReport(event){
+    event.preventDefault();
+    const name = document.getElementById('repName').value.trim();
+    const desc = document.getElementById('repDesc').value.trim();
+    if(!name || !desc) return;
+
+    const submitBtn = document.querySelector('#reportForm .primary-btn');
+    submitBtn.textContent = 'Submitting...';
+    submitBtn.disabled = true;
+
+    let evidenceUrl = '';
+    const fileInput = document.getElementById('repFile');
+    if(fileInput.files && fileInput.files.length > 0){
+      const file = fileInput.files[0];
+      const fileExt = file.name.split('.').pop();
+      const filePath = 'evidence/' + Date.now() + '_' + Math.random().toString(36).slice(2,8) + '.' + fileExt;
+
+      const { error: uploadErr } = await db.storage
+        .from('evidence')
+        .upload(filePath, file);
+
+      if(uploadErr){
+        console.error('Upload failed:', uploadErr);
+        showToast('Upload failed: ' + (uploadErr.message || 'Unknown error'), 'error');
+      } else {
+        const { data: urlData } = db.storage
+          .from('evidence')
+          .getPublicUrl(filePath);
+        evidenceUrl = urlData.publicUrl;
+      }
+    }
+
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    const { error } = await db
+      .from('reports')
+      .insert({
+        name: name,
+        description: desc,
+        has_file: evidenceUrl !== '',
+        evidence_url: evidenceUrl,
+        date: dateStr
+      });
+
+    submitBtn.textContent = 'Submit report';
+    submitBtn.disabled = false;
+
+    if(error){
+      console.error('Failed to submit report:', error);
+      showToast('Failed to submit report.', 'error');
+      return;
+    }
+
+    document.getElementById('reportForm').reset();
+    document.getElementById('fileChip').style.display = 'none';
+    fileSelected = false;
+
+    const { count } = await db
+      .from('reports')
+      .select('*', { count: 'exact', head: true })
+      .ilike('name', name);
+
+    if(count >= 10){
+      await db
+        .from('agencies')
+        .update({ status: 'under_review' })
+        .ilike('name', name)
+        .eq('status', 'verified');
+      await loadAgencies();
+      showToast('Report submitted. This agency is now under review (10+ reports).');
+    } else {
+      showToast('Report submitted successfully.');
+    }
+
+    renderReports();
+  }
+
+  async function renderReports(){
+    const feed = document.getElementById('reportsFeed');
+    feed.innerHTML = '<div class="loading-state">Loading reports...</div>';
+
+    const { data: reports, error } = await db
+      .from('reports')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if(error){
+      console.error('Failed to load reports:', error);
+      feed.innerHTML = '<div class="empty-state">Failed to load reports.</div>';
+      return;
+    }
+
+    if(!reports || reports.length === 0){
+      feed.innerHTML = '<div class="empty-state">No community reports yet.</div>';
+      return;
+    }
+
+    feed.innerHTML = reports.map(r => `
+      <div class="report-card">
+        <div class="top-row">
+          <p class="name">${escapeHtml(r.name)}</p>
+          <span class="badge unverified">Unverified — pending review</span>
+        </div>
+        <p class="desc-text">${escapeHtml(r.description)}</p>
+        <div class="foot">
+          <span>Submitted ${escapeHtml(r.date)}</span>
+          ${r.evidence_url ? '<a class="evidence-link" href="' + escapeHtml(r.evidence_url) + '" target="_blank" rel="noopener">📎 View evidence</a>' : (r.has_file ? '<span class="evidence-tag">📎 Evidence attached</span>' : '<span></span>')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ---------------------------------------------------------------
+  // UTIL
+  // ---------------------------------------------------------------
+  function escapeHtml(str){
+    if(str === undefined || str === null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  // ---------------------------------------------------------------
+  // INIT
+  // ---------------------------------------------------------------
+  renderList();
+</script>
+
 </body>
 </html>
